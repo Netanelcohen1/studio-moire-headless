@@ -1,0 +1,106 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { items } from '@wix/data';
+import { members } from '@wix/members';
+
+let member: any = null;
+try {
+  const res = await members.getCurrentMember();
+  member = (res as any)?.member ?? res;
+} catch {
+  member = null;
+}
+const loggedIn = Boolean(member?._id);
+
+let prefs: any = null;
+if (loggedIn) {
+  try {
+    const { items: existing } = await items.query('MemberPreferences').eq('memberId', member._id).limit(1).find();
+    prefs = existing[0] ?? null;
+  } catch (err) {
+    console.error('[account] preferences query failed:', err);
+  }
+}
+
+const saved = Astro.url.searchParams.get('saved') === '1';
+const errored = Astro.url.searchParams.get('error') === '1';
+const displayName = member?.profile?.nickname || member?.contact?.firstName || member?.loginEmail || 'there';
+const shootTypes = ['Lookbook Shoot', 'Casting Board Session', 'Client Gallery Shoot', 'Editorial Studio Day'];
+const contactWays = ['Email', 'Phone', 'WhatsApp'];
+---
+<Layout
+  title="My account"
+  description="Sign in to Studio Moire to save your shoot preferences for faster booking."
+>
+  <section class="max-w-6xl mx-auto px-6 pt-16 pb-8">
+    <p class="kicker text-sm uppercase tracking-[0.18em] text-rule">Members</p>
+    <h1 class="font-display font-bold leading-[1.05] mt-3" style="font-size: clamp(2rem, 4.5vw, 3.75rem);">Your studio preferences</h1>
+    <p class="text-lg text-mute max-w-prose mt-4">Sign in to save how you like to shoot — so every booking starts from what we already know about you.</p>
+  </section>
+
+  <section class="max-w-6xl mx-auto px-6 pb-24">
+    {!loggedIn ? (
+      <div class="container-reading border border-border rounded-md p-8 bg-paper-warm flex flex-col gap-4 items-start">
+        <h2 class="font-display text-2xl">Sign in or create an account</h2>
+        <p class="text-mute">Members can save a preferred shoot type, contact method, and notes. It takes a moment and makes your next booking faster.</p>
+        <a href="/api/auth/login?returnToUrl=/account" class="btn-primary">Sign in / Sign up</a>
+      </div>
+    ) : (
+      <div class="container-reading flex flex-col gap-6">
+        <div class="flex items-center justify-between gap-4 flex-wrap">
+          <p class="text-mute">Signed in as <span class="text-ink font-medium">{member.loginEmail ?? displayName}</span></p>
+          <a href="/api/auth/logout" class="text-sm underline decoration-accent underline-offset-4 hover:text-accent">Sign out</a>
+        </div>
+
+        {saved && <p class="form-success" role="status">Saved. We'll use these preferences on your next booking.</p>}
+        {errored && <p class="form-error" role="alert">Something went wrong saving your preferences. Please try again.</p>}
+
+        <form method="POST" action="/api/save-preferences" class="form-container border border-border rounded-md p-6 bg-paper-warm">
+          <div class="form-field">
+            <label class="form-label" for="preferredShootType">Preferred shoot type</label>
+            <select id="preferredShootType" name="preferredShootType" class="form-input">
+              <option value="">No preference</option>
+              {shootTypes.map((s) => (
+                <option value={s} selected={prefs?.preferredShootType === s}>{s}</option>
+              ))}
+            </select>
+          </div>
+          <div class="form-field">
+            <label class="form-label" for="preferredContact">Preferred contact method</label>
+            <select id="preferredContact" name="preferredContact" class="form-input">
+              <option value="">No preference</option>
+              {contactWays.map((c) => (
+                <option value={c} selected={prefs?.preferredContact === c}>{c}</option>
+              ))}
+            </select>
+          </div>
+          <div class="form-field">
+            <label class="form-label" for="preferredDate">Typical preferred timing</label>
+            <input id="preferredDate" name="preferredDate" class="form-input" placeholder="e.g. weekday mornings, 3–7 days out" value={prefs?.preferredDate ?? ''} />
+          </div>
+          <div class="form-field">
+            <label class="form-label" for="notes">Notes for the studio</label>
+            <textarea id="notes" name="notes" rows={4} class="form-textarea" placeholder="Anything we should remember — access needs, references, the labels you work with">{prefs?.notes ?? ''}</textarea>
+          </div>
+          <button type="submit" class="btn-primary form-button">Save preferences</button>
+        </form>
+      </div>
+    )}
+  </section>
+
+  <style is:global>
+    .form-container { display: flex; flex-direction: column; gap: 1rem; }
+    .form-field { display: flex; flex-direction: column; gap: 0.4rem; }
+    .form-label { font-size: 0.875rem; font-weight: 500; color: var(--color-ink); }
+    .form-input, .form-textarea {
+      width: 100%; padding: 0.75rem 0.9rem; min-height: 44px;
+      background: var(--color-paper); color: var(--color-ink);
+      border: 1px solid var(--color-border); border-radius: var(--radius-md);
+    }
+    .form-input:focus, .form-textarea:focus { outline: 2px solid var(--color-accent); outline-offset: 1px; border-color: var(--color-rule); }
+    .form-textarea { resize: vertical; }
+    .form-button { width: 100%; margin-top: 0.25rem; }
+    .form-success { padding: 1rem 1.25rem; border: 1px solid var(--color-rule); border-radius: var(--radius-md); background: var(--color-paper); color: var(--color-ink); }
+    .form-error { color: var(--color-error); }
+  </style>
+</Layout>

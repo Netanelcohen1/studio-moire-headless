@@ -1,0 +1,105 @@
+---
+// src/pages/book.astro — SSR service catalog (the booking entry point).
+// Lists the bookable Wix Bookings services; each card links to /book/[slug]
+// where the availability calendar + booking form live. Single-location,
+// single-staff, APPOINTMENT-only site → no location/category/staff pickers
+// (they auto-skip per FLOW.md), so the catalog is a simple grid.
+//
+// SSR reads use the ambient @wix/essentials client (auth.elevate) — never
+// OAuthStrategy/createClient in .astro (the WIX_CLIENT_ID env var is client-only
+// and undefined at server render → 500). The queryServices filter MUST include
+// the Bookings appId.
+import Layout from '../layouts/Layout.astro';
+import { services } from '@wix/bookings';
+import { auth } from '@wix/essentials';
+
+const BOOKING_APP_ID = '13d21c63-b5ec-5912-8397-c3a5ddb27a97';
+
+let serviceList: any[] = [];
+try {
+  const result = await auth
+    .elevate(services.queryServices)({
+      query: { filter: { appId: BOOKING_APP_ID }, paging: { limit: 100 } },
+      conditionalFields: ['STAFF_MEMBER_DETAILS'],
+    })
+    .find();
+  serviceList = (result.items ?? []).filter((s: any) => !s.hidden);
+} catch (err) {
+  console.error('[book] services listing query failed:', err);
+}
+
+// V2 service fields are flat: slug at mainSlug.name; price at
+// payment.fixed.price.value; duration at
+// schedule.availabilityConstraints.sessionDurations[0]; media at media.mainMedia.
+const getSlug = (s: any): string => s.mainSlug?.name ?? s.supportedSlugs?.[0]?.name ?? s._id;
+const getDuration = (s: any): number => s.schedule?.availabilityConstraints?.sessionDurations?.[0] ?? 60;
+const formatPrice = (s: any): string | undefined => {
+  const p = s.payment;
+  if (!p || p.rateType === 'NO_FEE') return undefined;
+  if (p.rateType === 'FIXED' && p.fixed?.price) {
+    const { value, currency } = p.fixed.price;
+    if (!value) return undefined;
+    try {
+      return new Intl.NumberFormat('en-US', { style: 'currency', currency: currency ?? 'USD' }).format(Number(value));
+    } catch {
+      return `${value} ${currency ?? ''}`.trim();
+    }
+  }
+  return undefined;
+};
+---
+<Layout
+  title="Book a shoot"
+  description="Book a shoot with Studio Moire in Casablanca. Choose an option, pick a time on the calendar, and confirm. No payment is taken until you confirm the selected option."
+>
+  <section class="max-w-6xl mx-auto px-6 pt-16 pb-8">
+    <p class="kicker text-sm uppercase tracking-[0.18em] text-rule">Book a shoot</p>
+    <h1 class="font-display font-bold leading-[1.05] mt-3" style="font-size: clamp(2rem, 4.5vw, 3.75rem);">Choose an option, pick your time.</h1>
+    <p class="text-lg text-mute max-w-prose mt-4">
+      Pick the shoot that fits, then choose a time from the studio calendar and confirm your details.
+      <strong class="text-ink font-medium">No payment is taken until you confirm the selected option.</strong>
+    </p>
+  </section>
+
+  <section class="max-w-6xl mx-auto px-6 pb-24">
+    {
+      serviceList.length === 0 ? (
+        <p class="text-mute">
+          Our booking calendar is being set up. Please email{' '}
+          <a class="underline" href="mailto:hello@studio-moire.example">hello@studio-moire.example</a>{' '}
+          and we'll respond within one business day.
+        </p>
+      ) : (
+        <ul class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+          {serviceList.map((s) => {
+            const slug = getSlug(s);
+            const price = formatPrice(s);
+            const duration = getDuration(s);
+            const imageUrl = s.media?.mainMedia?.image?.url ?? s.media?.items?.[0]?.image?.url;
+            return (
+              <li class="border border-border rounded-md overflow-hidden bg-paper-warm flex flex-col">
+                {imageUrl && (
+                  <img src={imageUrl} alt={s.name ?? 'Studio Moire shoot'} loading="lazy" decoding="async" class="w-full h-48 object-cover" />
+                )}
+                <div class="p-6 flex flex-col gap-3 flex-1">
+                  <h2 class="font-display text-2xl leading-tight">{s.name ?? 'Untitled'}</h2>
+                  <p class="text-sm text-rule font-medium">
+                    <span>{duration} min</span>
+                    {price && <span> · {price}</span>}
+                  </p>
+                  {(s.tagLine || s.description) && (
+                    <p class="text-sm text-mute flex-1">{s.tagLine ?? s.description}</p>
+                  )}
+                  <a href={`/book/${slug}`} class="card-cta" aria-label={`Book this shoot — ${s.name}`}>
+                    <span>Book this shoot</span>
+                    <span class="card-cta-arrow" aria-hidden="true">→</span>
+                  </a>
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+      )
+    }
+  </section>
+</Layout>

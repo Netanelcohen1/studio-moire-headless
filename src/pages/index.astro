@@ -1,8 +1,415 @@
 ---
-import Welcome from '../components/Welcome.astro';
 import Layout from '../layouts/Layout.astro';
----
+import { decorative, heroShoot } from '../lib/images';
+import { getPortfolio, getTestimonials, getFaq } from '../lib/cms';
 
-<Layout>
-	<Welcome />
+const [projects, testimonials, faqs] = await Promise.all([
+  getPortfolio(),
+  getTestimonials(),
+  getFaq(),
+]);
+
+const offer = projects.slice(0, 6);
+const samples = projects.slice(0, 2);
+const primaryQuote = testimonials[0];
+const secondQuote = testimonials[1];
+const faqCards = faqs.slice(0, 4);
+
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "ProfessionalService",
+  name: "Studio Moire",
+  description:
+    "Fashion photography studio in Casablanca, Morocco — lookbook shoots, casting boards, and client galleries. Every garment is photographed beside its fabric samples before the model steps in.",
+  image: decorative.hero,
+  url: "/",
+  telephone: "+212 54 2344 6744",
+  email: "hello@studio-moire.example",
+  priceRange: "$$",
+  address: {
+    "@type": "PostalAddress",
+    streetAddress: "56 Lantern Court",
+    addressLocality: "Casablanca",
+    postalCode: "1044",
+    addressCountry: "MA",
+  },
+  areaServed: "Casablanca",
+  openingHours: "Tu-Sa 10:00-18:00",
+  foundingDate: "2020",
+  sameAs: [
+    "https://instagram.example/studiomoire",
+    "https://tiktok.example/@studiomoire",
+  ],
+};
+---
+<Layout
+  title="Fashion photography studio in Casablanca"
+  description="Studio Moire is a fashion photography studio in Casablanca — lookbook shoots, casting boards, and client galleries, with fabric samples photographed beside every garment before the model steps in."
+>
+  <script type="application/ld+json" is:inline set:html={JSON.stringify(jsonLd)} slot="head" />
+
+  <!-- 1 · Hero -->
+  <section class="hero-section relative overflow-hidden">
+    <div class="max-w-6xl mx-auto px-6 pt-14 pb-20 md:pt-20 md:pb-28 grid grid-cols-1 md:grid-cols-[1.05fr_1fr] gap-10 md:gap-16 items-center">
+      <div class="order-2 md:order-1 flex flex-col gap-6 anim-rise">
+        <p class="kicker inline-flex items-center gap-3 text-sm uppercase tracking-[0.2em] text-rule">
+          <span class="swatch-mark" aria-hidden="true"></span>
+          Casablanca · est. 2020
+        </p>
+        <h1 class="font-display font-bold leading-[1.02]" style="font-size: clamp(2.4rem, 5.6vw, 5rem);">
+          Fashion photography built around <em class="not-italic" style="color: var(--color-rule);">one unforgettable detail.</em>
+        </h1>
+        <p class="text-lg md:text-xl text-mute max-w-prose">
+          A Casablanca studio for lookbooks, casting boards, and client galleries — where every
+          garment is photographed beside its fabric samples before the model steps in.
+        </p>
+        <div class="flex flex-wrap gap-4 anim-cta">
+          <a href="/book" class="btn-primary text-base">Book a shoot</a>
+          <a href="/portfolio" class="btn-secondary text-base">See the work</a>
+        </div>
+        <ul class="hero-trust flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-mute anim-cta">
+          <li>Tue–Sat · 10:00–18:00</li>
+          <li aria-hidden="true">·</li>
+          <li>Replies within 1 business day</li>
+          <li aria-hidden="true">·</li>
+          <li>No payment until you confirm</li>
+        </ul>
+      </div>
+
+      <div class="order-1 md:order-2 relative anim-rise" style="--reveal-delay: 100ms;">
+        <div class="hero-frame rounded-md overflow-hidden">
+          <div class="hero-slides" data-hero-slides style="aspect-ratio: 4/5;">
+            {heroShoot.map((s, i) => (
+              <img
+                class:list={["hero-slide", i === 0 && "is-active"]}
+                src={s.src}
+                alt={s.alt}
+                width="1024" height="1024"
+                fetchpriority={i === 0 ? "high" : undefined}
+                loading={i === 0 ? "eager" : "lazy"}
+                decoding="async"
+              />
+            ))}
+          </div>
+          <span class="hero-live-tag" aria-hidden="true"><span class="hero-live-dot"></span>On set · Casablanca</span>
+        </div>
+        <!-- Signature device: a small swatch card echoing the fabric-first ritual -->
+        <figure class="swatch-card" aria-hidden="true">
+          <div class="swatch-chips">
+            <span style="background: var(--color-rule);"></span>
+            <span style="background: var(--color-accent);"></span>
+            <span style="background: var(--color-ink-soft);"></span>
+          </div>
+          <figcaption>Fabric, before the figure</figcaption>
+        </figure>
+      </div>
+    </div>
+  </section>
+
+  <!-- 2 · Proof strip -->
+  <section class="bg-paper-warm border-y border-border">
+    <div class="max-w-6xl mx-auto px-6 py-12 grid grid-cols-1 md:grid-cols-[1fr_auto] gap-10 items-center">
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-8">
+        <div>
+          <p class="font-display text-3xl text-ink">{projects.length || 10}</p>
+          <p class="text-sm text-mute">listed portfolio projects, each with pricing and timing</p>
+        </div>
+        <div>
+          <p class="font-display text-3xl text-ink">Tue–Sat</p>
+          <p class="text-sm text-mute">10:00–18:00 booking windows; most slots 3–7 days out</p>
+        </div>
+        <div>
+          {primaryQuote ? (
+            <>
+              <p class="text-sm text-ink leading-relaxed">“{primaryQuote.quote}”</p>
+              <p class="text-xs text-mute mt-2">— {primaryQuote.name}, {primaryQuote.neighborhood}</p>
+            </>
+          ) : (
+            <p class="text-sm text-mute">Trusted by designers and labels across Casablanca.</p>
+          )}
+        </div>
+      </div>
+      <img src={decorative.proof} alt="Fabric samples laid beside a garment next to a handwritten service note" width="1200" height="896" loading="lazy" decoding="async" class="hidden md:block w-56 h-40 object-cover rounded-md border border-border" />
+    </div>
+  </section>
+
+  <!-- 3 · Offer grid (CMS) -->
+  <section class="max-w-6xl mx-auto px-6 py-20">
+    <div class="flex items-end justify-between gap-6 mb-10">
+      <div>
+        <hr class="editorial-rule w-16 ml-0" />
+        <h2 class="font-display text-3xl md:text-4xl">What you can book</h2>
+      </div>
+      <a href="/portfolio" class="btn-ghost hidden sm:inline-flex">See all projects →</a>
+    </div>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      {offer.map((p, i) => (
+        <article class="offer-card flex flex-col border border-border rounded-md overflow-hidden bg-paper-warm" data-reveal style={`--reveal-delay: ${i * 70}ms;`}>
+          {p.image && (
+            <img src={p.image} alt={p.name ?? 'Portfolio project'} width="1024" height="1024" loading="lazy" decoding="async" class="w-full h-52 object-cover" />
+          )}
+          <div class="flex flex-col gap-2 p-5 flex-1">
+            <h3 class="font-display text-xl leading-tight">{p.name}</h3>
+            <p class="text-sm text-mute flex-1">{p.shortDescription}</p>
+            <p class="text-sm text-rule font-medium">{p.priceOrDuration}</p>
+            <a href="/book" class="card-cta" aria-label={`Book a shoot — ${p.name ?? 'this project'}`}>
+              <span>Book this shoot</span>
+              <span class="card-cta-arrow" aria-hidden="true">→</span>
+            </a>
+          </div>
+        </article>
+      ))}
+    </div>
+    <a href="/portfolio" class="btn-ghost sm:hidden mt-8 w-full">See all projects →</a>
+  </section>
+
+  <!-- 4 · Signature detail -->
+  <section class="signature-band border-y border-rule">
+    <div class="max-w-6xl mx-auto px-6 py-20 grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+      <div class="rounded-md overflow-hidden border border-border" data-reveal>
+        <img src={decorative.signature} alt="Macro photograph of fabric samples clipped beside a garment" width="1024" height="1024" loading="lazy" decoding="async" class="w-full object-cover" style="aspect-ratio: 1/1;" />
+      </div>
+      <div class="flex flex-col gap-5" data-reveal style="--reveal-delay: 120ms;">
+        <p class="kicker text-sm uppercase tracking-[0.18em] text-rule">The signature</p>
+        <h2 class="font-display text-3xl md:text-4xl leading-tight">The fabric, before the figure.</h2>
+        <p class="leading-relaxed text-ink">
+          Before any model steps in, we photograph the garment beside its fabric samples — weave,
+          weight, and true colour, in the same light. It began as a note-to-self for retouching and
+          became the studio's signature: a concrete visual anchor clients can point to.
+        </p>
+        <ul class="grid grid-cols-3 gap-4 text-sm mt-2">
+          <li><span class="block font-display text-lg text-rule">Weave</span><span class="text-mute">texture on record</span></li>
+          <li><span class="block font-display text-lg text-rule">Weight</span><span class="text-mute">drape you can trust</span></li>
+          <li><span class="block font-display text-lg text-rule">Colour</span><span class="text-mute">matched in-light</span></li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5 · How it works -->
+  <section class="max-w-6xl mx-auto px-6 py-20 grid grid-cols-1 md:grid-cols-[1fr_1fr] gap-12 items-center">
+    <div class="flex flex-col gap-8" data-reveal>
+      <div>
+        <hr class="editorial-rule w-16 ml-0" />
+        <h2 class="font-display text-3xl md:text-4xl">How it works</h2>
+      </div>
+      <ol class="flex flex-col gap-6">
+        <li class="flex gap-4"><span class="font-display text-2xl text-rule">1</span><span><strong class="font-medium">Choose an option.</strong><br /><span class="text-mute">Pick a project or service that fits your shoot.</span></span></li>
+        <li class="flex gap-4"><span class="font-display text-2xl text-rule">2</span><span><strong class="font-medium">Send details or pick a slot.</strong><br /><span class="text-mute">Share dates, references, and any access needs.</span></span></li>
+        <li class="flex gap-4"><span class="font-display text-2xl text-rule">3</span><span><strong class="font-medium">Receive confirmation.</strong><br /><span class="text-mute">We reply with the next option and what to bring. No payment until you confirm.</span></span></li>
+      </ol>
+    </div>
+    <div class="rounded-md overflow-hidden border border-border" data-reveal style="--reveal-delay: 120ms;">
+      <img src={decorative.howItWorks} alt="A visitor checking in with a staff member at Studio Moire" width="1200" height="896" loading="lazy" decoding="async" class="w-full object-cover" style="aspect-ratio: 1200/896;" />
+    </div>
+  </section>
+
+  <!-- 6 · Stories & samples -->
+  <section class="bg-paper-warm border-y border-border">
+    <div class="max-w-6xl mx-auto px-6 py-20">
+      <div class="grid grid-cols-1 md:grid-cols-[1.2fr_1fr] gap-12 items-start">
+        <div class="flex flex-col gap-6">
+          <div>
+            <hr class="editorial-rule w-16 ml-0" />
+            <h2 class="font-display text-3xl md:text-4xl">Stories &amp; samples</h2>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            {samples.map((p) => (
+              <article class="flex flex-col gap-2">
+                {p.image && <img src={p.image} alt={p.name ?? 'Sample'} width="1024" height="1024" loading="lazy" decoding="async" class="w-full h-44 object-cover rounded-md border border-border" />}
+                <h3 class="font-display text-lg">{p.name}</h3>
+                <p class="text-sm text-mute">{p.featuredNote ?? p.shortDescription}</p>
+              </article>
+            ))}
+          </div>
+        </div>
+        <figure class="flex flex-col gap-4 border-l-2 pl-6" style="border-color: var(--color-accent);">
+          <img src={decorative.stories} alt="Two finished lookbook prints in natural window light" width="1376" height="768" loading="lazy" decoding="async" class="w-full h-40 object-cover rounded-md" />
+          {secondQuote && (
+            <blockquote class="font-display text-xl leading-snug text-ink">“{secondQuote.quote}”
+              <figcaption class="font-body text-sm text-mute mt-3">— {secondQuote.name}, {secondQuote.neighborhood}</figcaption>
+            </blockquote>
+          )}
+        </figure>
+      </div>
+    </div>
+  </section>
+
+  <!-- 7 · Trust & FAQ -->
+  <section class="max-w-6xl mx-auto px-6 py-20">
+    <div class="grid grid-cols-1 md:grid-cols-[1fr_1.1fr] gap-12 items-start">
+      <div class="flex flex-col gap-6">
+        <div>
+          <hr class="editorial-rule w-16 ml-0" />
+          <h2 class="font-display text-3xl md:text-4xl">Good to know</h2>
+        </div>
+        <img src={decorative.trust} alt="A staff member helping a visitor review lookbook shots" width="1200" height="896" loading="lazy" decoding="async" class="w-full h-56 object-cover rounded-md border border-border" />
+        <ul class="flex flex-wrap gap-3 text-xs">
+          <li class="border border-rule rounded-sm px-3 py-1">Accessible &amp; 44px tap targets</li>
+          <li class="border border-rule rounded-sm px-3 py-1">Replies within 1 business day</li>
+          <li class="border border-rule rounded-sm px-3 py-1">No payment until you confirm</li>
+        </ul>
+      </div>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+        {faqCards.map((f) => (
+          <article class="border border-border rounded-md p-5 bg-paper-warm">
+            <h3 class="font-display text-lg leading-tight mb-2">{f.question}</h3>
+            <p class="text-sm text-mute">{f.answer}</p>
+          </article>
+        ))}
+        <a href="/faq" class="text-sm underline decoration-accent underline-offset-4 hover:text-accent sm:col-span-2">Read all answers →</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- 8 · Final CTA -->
+  <section class="max-w-6xl mx-auto px-6 py-16">
+    <div class="grid grid-cols-1 md:grid-cols-2 rounded-md overflow-hidden border border-rule bg-paper-warm" data-reveal>
+      <img src={decorative.finalCta} alt="The Studio Moire main room in Casablanca in daylight" width="1376" height="768" loading="lazy" decoding="async" class="w-full h-64 md:h-full object-cover" />
+      <div class="flex flex-col justify-center gap-5 p-8 md:p-12">
+        <hr class="editorial-rule w-16 ml-0" />
+        <h2 class="font-display text-3xl md:text-4xl leading-tight text-ink">Bring the garment. We'll photograph the fabric first.</h2>
+        <p class="text-mute max-w-prose">Book a shoot in Casablanca, or send a note and we'll reply with the next available option.</p>
+        <div class="flex flex-wrap gap-4">
+          <a href="/book" class="btn-primary">Book a shoot</a>
+          <a href="/contact" class="btn-secondary">Contact the studio</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Mobile sticky book bar (appears after hero scrolls out) -->
+  <div class="sticky-book" data-sticky-book aria-hidden="true">
+    <a href="/book" class="btn-primary w-full">Book a shoot</a>
+  </div>
+
+  <style>
+    .anim-rise, .anim-cta { opacity: 0; transform: translateY(10px); }
+    .anim-rise { animation: rise 300ms ease forwards; }
+    .anim-cta { animation: rise 300ms ease 450ms forwards; }
+    @keyframes rise { to { opacity: 1; transform: none; } }
+
+    .signature-band { background: color-mix(in srgb, var(--color-rule) 7%, var(--color-paper)); }
+
+    /* Hero: warm plaster backdrop with a soft terracotta glow, set apart from the page. */
+    .hero-section {
+      background:
+        radial-gradient(120% 90% at 85% 0%, color-mix(in srgb, var(--color-accent) 16%, transparent), transparent 60%),
+        linear-gradient(180deg, color-mix(in srgb, var(--color-rule) 6%, var(--color-paper)), var(--color-paper));
+      border-bottom: 1px solid var(--color-border);
+    }
+    .swatch-mark {
+      width: 2.75rem; height: 0.6rem; border-radius: 1px;
+      background: linear-gradient(90deg,
+        var(--color-rule) 0 33.3%, var(--color-accent) 33.3% 66.6%, var(--color-ink-soft) 66.6% 100%);
+      flex: none;
+    }
+    .hero-frame {
+      border: 1px solid var(--color-rule);
+      box-shadow: 14px 14px 0 -1px color-mix(in srgb, var(--color-rule) 22%, transparent);
+    }
+    .swatch-card {
+      position: absolute; left: -0.75rem; bottom: 1.25rem;
+      background: var(--color-paper-warm);
+      border: 1px solid var(--color-rule);
+      border-radius: var(--radius-md);
+      padding: 0.6rem 0.8rem; display: flex; flex-direction: column; gap: 0.4rem;
+      box-shadow: 0 8px 22px rgba(0,0,0,0.10);
+    }
+    .swatch-chips { display: flex; gap: 0.3rem; }
+    .swatch-chips span { width: 1.15rem; height: 1.15rem; border-radius: 2px; display: block; }
+    .swatch-card figcaption {
+      font-family: var(--font-display); font-size: 0.8rem; color: var(--color-ink); letter-spacing: 0.01em;
+    }
+    @media (max-width: 640px) { .swatch-card { left: 0.5rem; bottom: 0.5rem; } .hero-frame { box-shadow: 8px 8px 0 -1px color-mix(in srgb, var(--color-rule) 22%, transparent); } }
+
+    .offer-card { transition: transform 200ms ease, box-shadow 200ms ease; }
+    .offer-card:hover { transform: translateY(-3px); box-shadow: 0 8px 24px rgba(0,0,0,0.08); }
+
+    .sticky-book {
+      position: fixed; left: 0; right: 0; bottom: 0; z-index: 60;
+      padding: 0.75rem 1rem calc(0.75rem + env(safe-area-inset-bottom));
+      background: color-mix(in srgb, var(--color-paper) 94%, transparent);
+      backdrop-filter: blur(8px);
+      border-top: 1px solid var(--color-rule);
+      transform: translateY(120%); transition: transform 240ms ease;
+    }
+    .sticky-book[data-visible="true"] { transform: translateY(0); }
+    @media (min-width: 768px) { .sticky-book { display: none; } }
+
+    /* Hero-fold animation — crossfading photoshoot slideshow with a slow zoom. */
+    .hero-frame { overflow: hidden; position: relative; }
+    .hero-slides { position: relative; width: 100%; }
+    .hero-slide {
+      position: absolute; inset: 0; width: 100%; height: 100%;
+      object-fit: cover; opacity: 0;
+      transition: opacity 1100ms ease;
+      transform-origin: 60% 40%;
+    }
+    .hero-slide.is-active { opacity: 1; animation: kenburns 8.4s ease-out both; }
+    @keyframes kenburns { from { transform: scale(1.1); } to { transform: scale(1); } }
+    .hero-live-tag {
+      position: absolute; top: 0.75rem; left: 0.75rem; z-index: 2;
+      display: inline-flex; align-items: center; gap: 0.4rem;
+      padding: 0.3rem 0.6rem; border-radius: var(--radius-md);
+      background: color-mix(in srgb, var(--color-ink) 62%, transparent);
+      color: var(--color-cream); font-size: 0.72rem; text-transform: uppercase;
+      letter-spacing: 0.12em; backdrop-filter: blur(4px);
+    }
+    .hero-live-dot { width: 0.5rem; height: 0.5rem; border-radius: 999px; background: var(--color-accent); animation: livePulse 1.8s ease-in-out infinite; }
+    @keyframes livePulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.4; transform: scale(0.7); } }
+
+    .swatch-card { opacity: 0; transform: translateY(14px); animation: cardIn 560ms cubic-bezier(0.2, 0.8, 0.2, 1) 680ms forwards; }
+    @keyframes cardIn { to { opacity: 1; transform: none; } }
+    .swatch-chips span { opacity: 0; transform: translateY(6px) scale(0.7); animation: chipIn 420ms ease forwards; }
+    .swatch-chips span:nth-child(1) { animation-delay: 820ms; }
+    .swatch-chips span:nth-child(2) { animation-delay: 940ms; }
+    .swatch-chips span:nth-child(3) { animation-delay: 1060ms; }
+    @keyframes chipIn { to { opacity: 1; transform: none; } }
+
+    @media (prefers-reduced-motion: reduce) {
+      .anim-rise, .anim-cta { opacity: 1; transform: none; animation: none; }
+      .offer-card { transition: none; }
+      .sticky-book { transition: none; }
+      .hero-slide { animation: none !important; transform: none !important; }
+      .hero-live-dot { animation: none; }
+      .swatch-card, .swatch-chips span { animation: none; opacity: 1; transform: none; }
+    }
+  </style>
+
+  <script>
+    // Hero photoshoot slideshow — crossfade through on-set photos (actual movement).
+    let heroTimer: number | undefined;
+    function initHeroSlides() {
+      if (heroTimer) window.clearInterval(heroTimer);
+      const wrap = document.querySelector<HTMLElement>('[data-hero-slides]');
+      if (!wrap) return;
+      const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      const slides = Array.from(wrap.querySelectorAll<HTMLElement>('.hero-slide'));
+      if (reduce || slides.length < 2) return;
+      let i = 0;
+      heroTimer = window.setInterval(() => {
+        slides[i].classList.remove('is-active');
+        i = (i + 1) % slides.length;
+        slides[i].classList.add('is-active');
+      }, 4200);
+    }
+    initHeroSlides();
+    document.addEventListener('astro:page-load', initHeroSlides);
+    document.addEventListener('astro:before-swap', () => { if (heroTimer) window.clearInterval(heroTimer); });
+
+    // Reveal the mobile sticky CTA only after the hero scrolls out of view.
+    const bar = document.querySelector<HTMLElement>('[data-sticky-book]');
+    const hero = document.querySelector<HTMLElement>('.hero-section');
+    if (bar && hero && 'IntersectionObserver' in window) {
+      const io = new IntersectionObserver(
+        ([entry]) => {
+          bar.dataset.visible = entry.isIntersecting ? 'false' : 'true';
+          bar.setAttribute('aria-hidden', entry.isIntersecting ? 'true' : 'false');
+        },
+        { rootMargin: '-80px 0px 0px 0px' },
+      );
+      io.observe(hero);
+    }
+  </script>
 </Layout>

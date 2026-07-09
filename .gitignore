@@ -26,3 +26,6 @@ pnpm-debug.log*
 
 # jetbrains setting folder
 .idea/
+
+# installed skill tooling (reinstall via: wix skills add)
+.agents/

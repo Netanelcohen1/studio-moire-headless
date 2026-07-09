@@ -1,0 +1,124 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { auth } from '@wix/essentials';
+import { forms } from '@wix/forms';
+import ContactForm from '../components/ContactForm.tsx';
+
+let formId = '';
+let formFields: any[] = [];
+try {
+  const elevatedListForms = auth.elevate(forms.listForms);
+  const listResult = await elevatedListForms('wix.form_app.form');
+  const wixForm = listResult.forms?.[0];
+  formId = wixForm?._id ?? '';
+  formFields =
+    wixForm?.formFields
+      ?.filter((f: any) => f.fieldType === 'INPUT' && !f.hidden)
+      .map((f: any) => {
+        const opts = f.inputOptions;
+        const str = opts?.stringOptions;
+        const label =
+          str?.textInputOptions?.label ?? str?.phoneInputOptions?.label ?? str?.dropdownOptions?.label ?? opts?.target ?? '';
+        return {
+          label,
+          target: opts?.target ?? '',
+          required: opts?.required ?? false,
+          componentType: str?.componentType ?? 'TEXT_INPUT',
+          identifier: f.identifier ?? '',
+        };
+      }) ?? [];
+} catch (err) {
+  console.error('[contact] form discovery failed:', err);
+}
+
+const mapQuery = encodeURIComponent('56 Lantern Court, Casablanca 1044, Morocco');
+---
+<Layout
+  title="Contact"
+  description="Contact Studio Moire in Casablanca — email, phone, address, and a note form. We reply within one business day."
+>
+  <section class="max-w-6xl mx-auto px-6 pt-16 pb-8">
+    <p class="kicker text-sm uppercase tracking-[0.18em] text-rule">Contact</p>
+    <h1 class="font-display font-bold leading-[1.05] mt-3" style="font-size: clamp(2rem, 4.5vw, 3.75rem);">Send a note</h1>
+    <p class="text-lg text-mute max-w-prose mt-4">Questions about a shoot, pricing, or access? Write to us — we read and reply to every message within one business day.</p>
+  </section>
+
+  <section class="max-w-6xl mx-auto px-6 pb-24 grid grid-cols-1 md:grid-cols-[1fr_1.1fr] gap-12 items-start">
+    <div class="flex flex-col gap-8">
+      <address class="not-italic flex flex-col gap-4 text-ink">
+        <div>
+          <p class="text-sm text-mute uppercase tracking-wider">Email</p>
+          <a href="mailto:hello@studio-moire.example" class="text-lg hover:text-accent">hello@studio-moire.example</a>
+        </div>
+        <div>
+          <p class="text-sm text-mute uppercase tracking-wider">Phone</p>
+          <a href="tel:+212542344674" class="text-lg hover:text-accent">+212 54 2344 6744</a>
+        </div>
+        <div>
+          <p class="text-sm text-mute uppercase tracking-wider">Studio</p>
+          <p class="text-lg">56 Lantern Court, Casablanca 1044, Morocco</p>
+          <p class="text-mute">Tuesday–Saturday, 10:00–18:00</p>
+        </div>
+        <div class="flex gap-4 text-sm">
+          <a href="https://instagram.example/studiomoire" rel="me noopener" class="hover:text-accent">Instagram</a>
+          <a href="https://tiktok.example/@studiomoire" rel="me noopener" class="hover:text-accent">TikTok</a>
+        </div>
+      </address>
+
+      <!-- Map facade — defers the iframe until requested (perf) -->
+      <div class="map-facade border border-border rounded-md overflow-hidden" data-map-facade>
+        <button type="button" class="w-full text-left p-5 bg-paper-warm hover:text-accent" data-map-load aria-expanded="false">
+          <span class="font-display text-lg block">Find the studio</span>
+          <span class="text-sm text-mute">56 Lantern Court, Casablanca — tap to load the map</span>
+        </button>
+        <template data-map-src={`https://www.google.com/maps?q=${mapQuery}&output=embed`}></template>
+      </div>
+    </div>
+
+    <div class="border border-border rounded-md p-6 bg-paper-warm">
+      {formId ? (
+        <ContactForm client:load formId={formId} fields={formFields} submitLabel="Send a note" successMessage="Thanks — Studio Moire will reply with the next available option and any details to prepare." />
+      ) : (
+        <p class="text-mute">Our form is being set up. Please email <a class="underline" href="mailto:hello@studio-moire.example">hello@studio-moire.example</a>.</p>
+      )}
+    </div>
+  </section>
+
+  <style is:global>
+    .form-container { display: flex; flex-direction: column; gap: 1rem; }
+    .form-field { display: flex; flex-direction: column; gap: 0.4rem; }
+    .form-label { font-size: 0.875rem; font-weight: 500; color: var(--color-ink); }
+    .form-label .required { color: var(--color-accent); }
+    .form-input, .form-textarea {
+      width: 100%; padding: 0.75rem 0.9rem; min-height: 44px;
+      background: var(--color-paper); color: var(--color-ink);
+      border: 1px solid var(--color-border); border-radius: var(--radius-md);
+    }
+    .form-input:focus, .form-textarea:focus { outline: 2px solid var(--color-accent); outline-offset: 1px; border-color: var(--color-rule); }
+    .form-textarea { resize: vertical; }
+    .form-reassurance { font-size: 0.8125rem; color: var(--color-mute); }
+    .form-button { width: 100%; margin-top: 0.25rem; }
+    .form-success { padding: 1.25rem; border: 1px solid var(--color-rule); border-radius: var(--radius-md); background: var(--color-paper); color: var(--color-ink); font-size: 1rem; }
+    .form-error { color: var(--color-error); font-size: 0.875rem; }
+    .form-field-error { color: var(--color-error); font-size: 0.8125rem; }
+    .form-input-error { border-color: var(--color-error); }
+    .map-facade iframe { width: 100%; height: 320px; border: 0; display: block; }
+  </style>
+
+  <script>
+    const facade = document.querySelector<HTMLElement>('[data-map-facade]');
+    const btn = facade?.querySelector<HTMLButtonElement>('[data-map-load]');
+    const tpl = facade?.querySelector<HTMLElement>('template[data-map-src]');
+    btn?.addEventListener('click', () => {
+      const src = tpl?.dataset.mapSrc;
+      if (!src || !facade) return;
+      const iframe = document.createElement('iframe');
+      iframe.src = src;
+      iframe.loading = 'lazy';
+      iframe.title = 'Studio Moire location map';
+      iframe.referrerPolicy = 'no-referrer-when-downgrade';
+      facade.innerHTML = '';
+      facade.appendChild(iframe);
+    });
+  </script>
+</Layout>

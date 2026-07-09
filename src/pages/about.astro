@@ -1,0 +1,63 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { getAbout, getTestimonials } from '../lib/cms';
+import { decorative } from '../lib/images';
+
+const [about, testimonials] = await Promise.all([getAbout(), getTestimonials()]);
+const bodyHtml = typeof about?.body === 'string' ? about!.body : '';
+---
+<Layout
+  title="About"
+  description="The story behind Studio Moire — a Casablanca fashion photography studio founded in 2020, and the fabric-sample ritual that became its signature."
+>
+  <section class="max-w-6xl mx-auto px-6 pt-16 pb-8 grid grid-cols-1 md:grid-cols-[1fr_1fr] gap-12 items-center">
+    <div class="flex flex-col gap-5">
+      <p class="kicker text-sm uppercase tracking-[0.18em] text-rule">About · Casablanca · est. 2020</p>
+      <h1 class="font-display font-bold leading-[1.05]" style="font-size: clamp(2rem, 4.5vw, 3.75rem);">{about?.title ?? 'About Studio Moire'}</h1>
+      <p class="text-lg text-mute">A working studio a few streets back from the coast, built around one habit: photograph the fabric before the figure.</p>
+      <a href="/book" class="btn-primary self-start">Meet the team — book a shoot</a>
+    </div>
+    <div class="rounded-md overflow-hidden border border-border">
+      <img src={decorative.about} alt="The Studio Moire team at work amid garment rails and fabric sample boards" width="1200" height="896" loading="eager" decoding="async" class="w-full object-cover" style="aspect-ratio: 1200/896;" />
+    </div>
+  </section>
+
+  <section class="max-w-6xl mx-auto px-6 py-12">
+    <div class="container-reading prose-body flex flex-col gap-5 text-ink leading-relaxed" set:html={bodyHtml} />
+  </section>
+
+  <section class="signature-band border-y border-rule">
+    <div class="max-w-6xl mx-auto px-6 py-16 grid grid-cols-1 md:grid-cols-2 gap-10 items-center">
+      <img src={decorative.signature} alt="Macro of fabric samples beside a garment" width="1024" height="1024" loading="lazy" decoding="async" class="w-full rounded-md object-cover border border-border" style="aspect-ratio: 1/1; max-height: 360px;" data-reveal />
+      <div class="flex flex-col gap-4" data-reveal style="--reveal-delay: 120ms;">
+        <p class="kicker text-sm uppercase tracking-[0.18em] text-rule">The signature</p>
+        <h2 class="font-display text-3xl text-ink">The habit that became the signature</h2>
+        <p class="text-ink leading-relaxed">The fabric sample sits in the same light as the garment. It started as a retouching reference and stayed because clients kept pointing to it — proof of weave, weight, and true colour before a single model steps in.</p>
+      </div>
+    </div>
+  </section>
+
+  <style is:global>
+    .signature-band { background: color-mix(in srgb, var(--color-rule) 7%, var(--color-paper)); }
+  </style>
+
+  {testimonials.length > 0 && (
+    <section class="max-w-6xl mx-auto px-6 py-20">
+      <hr class="editorial-rule w-16 ml-0" />
+      <h2 class="font-display text-3xl md:text-4xl mb-8">What clients say</h2>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+        {testimonials.map((t) => (
+          <figure class="border border-border rounded-md p-6 bg-paper-warm flex flex-col gap-3">
+            <blockquote class="font-display text-xl leading-snug">“{t.quote}”</blockquote>
+            <figcaption class="text-sm text-mute">— {t.name}, {t.neighborhood}{t.context ? ` · ${t.context}` : ''}</figcaption>
+          </figure>
+        ))}
+      </div>
+    </section>
+  )}
+
+  <style>
+    .prose-body :global(p) { margin-bottom: 1rem; }
+    .prose-body :global(h2), .prose-body :global(h3) { font-family: var(--font-display); margin: 1.5rem 0 0.5rem; }
+  </style>
+</Layout>

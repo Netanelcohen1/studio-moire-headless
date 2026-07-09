@@ -1,0 +1,105 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { getPortfolio } from '../lib/cms';
+
+const projects = await getPortfolio();
+
+const itemListJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "ItemList",
+  name: "Studio Moire portfolio projects",
+  itemListElement: projects.map((p, i) => ({
+    "@type": "ListItem",
+    position: i + 1,
+    name: p.name,
+    description: p.shortDescription,
+    image: p.image,
+  })),
+};
+---
+<Layout
+  title="Portfolio"
+  description="Browse Studio Moire's Casablanca portfolio projects — lookbook shoots, casting boards, and client galleries, each with pricing, timing, and availability."
+>
+  <script type="application/ld+json" is:inline set:html={JSON.stringify(itemListJsonLd)} slot="head" />
+
+  <section class="max-w-6xl mx-auto px-6 pt-16 pb-8">
+    <p class="kicker text-sm uppercase tracking-[0.18em] text-rule">Casablanca · portfolio projects</p>
+    <h1 class="font-display font-bold leading-[1.05] mt-3" style="font-size: clamp(2rem, 4.5vw, 3.75rem);">Projects you can book</h1>
+    <p class="text-lg text-mute max-w-prose mt-4">
+      {projects.length} structured projects — each shows a short description, pricing or duration,
+      current availability, and a note tied to our fabric-first way of working.
+    </p>
+
+    <div class="mt-8 flex flex-col sm:flex-row sm:items-center gap-3" data-portfolio-filter>
+      <label for="pf-search" class="text-sm text-mute">Filter</label>
+      <input
+        id="pf-search" type="search" placeholder="Search projects — e.g. lookbook, editorial, denim…"
+        class="form-input max-w-md" autocomplete="off"
+      />
+      <span class="text-sm text-mute" data-pf-count></span>
+    </div>
+  </section>
+
+  <section class="max-w-6xl mx-auto px-6 pb-24">
+    <ul class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6" data-pf-grid>
+      {projects.map((p) => (
+        <li
+          class="offer-card flex flex-col border border-border rounded-md overflow-hidden bg-paper-warm"
+          data-pf-item
+          data-pf-text={`${p.name ?? ''} ${p.shortDescription ?? ''} ${p.featuredNote ?? ''}`.toLowerCase()}
+        >
+          {p.image && (
+            <img src={p.image} alt={p.name ?? 'Portfolio project'} width="1024" height="1024" loading="lazy" decoding="async" class="w-full h-56 object-cover" />
+          )}
+          <div class="flex flex-col gap-3 p-6 flex-1">
+            <h2 class="font-display text-2xl leading-tight">{p.name}</h2>
+            <p class="text-sm text-mute flex-1">{p.shortDescription}</p>
+            {p.featuredNote && (
+              <p class="text-xs text-ink border-l-2 pl-3" style="border-color: var(--color-accent);">{p.featuredNote}</p>
+            )}
+            <dl class="flex flex-wrap gap-x-6 gap-y-1 text-sm mt-1">
+              <div><dt class="text-mute inline">Price / time: </dt><dd class="text-rule font-medium inline">{p.priceOrDuration}</dd></div>
+              <div><dt class="text-mute inline">Availability: </dt><dd class="inline">{p.availability}</dd></div>
+            </dl>
+            <a href="/book" class="card-cta" aria-label={`Book a shoot — ${p.name ?? 'this project'}`}>
+              <span>Book this shoot</span>
+              <span class="card-cta-arrow" aria-hidden="true">→</span>
+            </a>
+          </div>
+        </li>
+      ))}
+    </ul>
+    <p class="text-center text-mute mt-12 hidden" data-pf-empty>No projects match that search. <button type="button" class="underline" data-pf-clear>Clear filter</button></p>
+  </section>
+
+  <style>
+    .offer-card { transition: transform 200ms ease, box-shadow 200ms ease; }
+    .offer-card:hover { transform: translateY(-3px); box-shadow: 0 8px 24px rgba(0,0,0,0.08); }
+    @media (prefers-reduced-motion: reduce) { .offer-card { transition: none; } }
+  </style>
+
+  <script>
+    // CMS filter — hydrates on load, progressive (grid renders server-side).
+    const input = document.querySelector<HTMLInputElement>('[data-portfolio-filter] input');
+    const items = Array.from(document.querySelectorAll<HTMLElement>('[data-pf-item]'));
+    const count = document.querySelector<HTMLElement>('[data-pf-count]');
+    const empty = document.querySelector<HTMLElement>('[data-pf-empty]');
+    const clear = document.querySelector<HTMLButtonElement>('[data-pf-clear]');
+    const total = items.length;
+    function apply(q: string) {
+      const term = q.trim().toLowerCase();
+      let shown = 0;
+      for (const el of items) {
+        const match = !term || (el.dataset.pfText ?? '').includes(term);
+        el.style.display = match ? '' : 'none';
+        if (match) shown++;
+      }
+      if (count) count.textContent = term ? `${shown} of ${total}` : `${total} projects`;
+      if (empty) empty.classList.toggle('hidden', shown !== 0);
+    }
+    input?.addEventListener('input', () => apply(input.value));
+    clear?.addEventListener('click', () => { if (input) { input.value = ''; apply(''); input.focus(); } });
+    apply('');
+  </script>
+</Layout>
