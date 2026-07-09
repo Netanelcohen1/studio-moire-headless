@@ -37,13 +37,11 @@ const formatPrice = (s: any): string | undefined => {
   const p = s.payment;
   if (!p || p.rateType === 'NO_FEE') return undefined;
   if (p.rateType === 'FIXED' && p.fixed?.price) {
-    const { value, currency } = p.fixed.price;
+    const { value } = p.fixed.price;
     if (!value) return undefined;
-    try {
-      return new Intl.NumberFormat('en-US', { style: 'currency', currency: currency ?? 'USD' }).format(Number(value));
-    } catch {
-      return `${value} ${currency ?? ''}`.trim();
-    }
+    // Display in MAD to match the studio's Casablanca pricing (site base currency
+    // governs the Wix-hosted checkout; set it to MAD in the dashboard to align that step).
+    return `${Number(value).toLocaleString('en-US')} MAD`;
   }
   return undefined;
 };

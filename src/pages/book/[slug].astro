@@ -89,13 +89,10 @@ try {
 const formatPrice = (p: any): string | undefined => {
   if (!p || p.rateType === 'NO_FEE') return undefined;
   if (p.rateType === 'FIXED' && p.fixed?.price) {
-    const { value, currency } = p.fixed.price;
+    const { value } = p.fixed.price;
     if (!value) return undefined;
-    try {
-      return new Intl.NumberFormat('en-US', { style: 'currency', currency: currency ?? 'USD' }).format(Number(value));
-    } catch {
-      return `${value} ${currency ?? ''}`.trim();
-    }
+    // Display in MAD to match Casablanca pricing across the site (see book.astro note).
+    return `${Number(value).toLocaleString('en-US')} MAD`;
   }
   return undefined;
 };
