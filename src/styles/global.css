@@ -275,6 +275,45 @@ textarea:focus-visible {
   margin-block: 1.5rem;
 }
 
+/* ── Newsletter signup (footer) ───────────────────────────────────────────── */
+.newsletter-form { display: flex; flex-direction: column; gap: 0.5rem; }
+.newsletter-label { font-family: var(--font-display); font-size: 1rem; color: var(--color-ink); }
+.newsletter-row { display: flex; gap: 0.5rem; max-width: 22rem; }
+.newsletter-input {
+  flex: 1; min-height: 44px; padding: 0.6rem 0.8rem;
+  background: var(--color-paper); color: var(--color-ink);
+  border: 1px solid var(--color-border); border-radius: var(--radius-md);
+}
+.newsletter-input:focus-visible { outline: 3px solid var(--color-ink); outline-offset: 2px; }
+.newsletter-button {
+  min-height: 44px; padding: 0.6rem 1.1rem; white-space: nowrap;
+  background: var(--color-rule); color: var(--color-cream);
+  border: 1px solid var(--color-rule); border-radius: var(--radius-md); font-weight: 600;
+  transition: background-color 180ms ease, color 180ms ease;
+}
+.newsletter-button:hover:not(:disabled) { background: var(--color-accent); color: var(--color-ink); }
+.newsletter-success { font-size: 0.875rem; color: var(--color-ink); }
+.newsletter-error { font-size: 0.8125rem; color: var(--color-error); }
+
+/* ── Announcement bar (top) ───────────────────────────────────────────────── */
+.announce-bar {
+  background: var(--color-ink); color: var(--color-cream);
+  font-size: 0.8125rem; letter-spacing: 0.03em;
+}
+.announce-bar[hidden] { display: none; }
+.announce-inner { display: flex; align-items: center; justify-content: center; gap: 1rem; padding: 0.5rem 1rem; position: relative; }
+.announce-close {
+  position: absolute; right: 0.75rem; top: 50%; transform: translateY(-50%);
+  background: none; border: 0; color: var(--color-cream); opacity: 0.7; font-size: 1rem; line-height: 1; padding: 0.25rem;
+}
+.announce-close:hover { opacity: 1; }
+
+/* ── Breadcrumbs ──────────────────────────────────────────────────────────── */
+.crumbs { font-size: 0.8125rem; color: var(--color-mute); display: flex; flex-wrap: wrap; gap: 0.4rem; align-items: center; }
+.crumbs a:hover { color: var(--color-accent); }
+.crumbs [aria-current="page"] { color: var(--color-ink); }
+.crumbs .sep { opacity: 0.5; }
+
 /* ── Universal site chrome ────────────────────────────────────────────────── */
 .site-nav {
   position: sticky;

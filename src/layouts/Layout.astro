@@ -31,6 +31,12 @@ const { title, description, hasSeoTags = false } = Astro.props;
     <ClientRouter />
   </head>
   <body>
+    <div class="announce-bar" data-announce>
+      <div class="announce-inner">
+        <span>Now booking lookbooks &amp; editorials in Casablanca — replies within one business day.</span>
+        <button type="button" class="announce-close" data-announce-close aria-label="Dismiss announcement">×</button>
+      </div>
+    </div>
     <div class="nav-progress" data-nav-progress aria-hidden="true"></div>
     <Navigation />
     <main><slot /></main>
@@ -150,6 +156,22 @@ const { title, description, hasSeoTags = false } = Astro.props;
       }
       initReveal();
       document.addEventListener("astro:page-load", initReveal);
+
+      // Dismissible announcement bar (persists via localStorage across navigations).
+      function initAnnounce() {
+        const bar = document.querySelector<HTMLElement>("[data-announce]");
+        if (!bar) return;
+        let dismissed = false;
+        try { dismissed = localStorage.getItem("moire-announce") === "off"; } catch {}
+        if (dismissed) { bar.setAttribute("hidden", ""); return; }
+        const close = bar.querySelector<HTMLButtonElement>("[data-announce-close]");
+        close?.addEventListener("click", () => {
+          bar.setAttribute("hidden", "");
+          try { localStorage.setItem("moire-announce", "off"); } catch {}
+        });
+      }
+      initAnnounce();
+      document.addEventListener("astro:page-load", initAnnounce);
     </script>
   </body>
 </html>
