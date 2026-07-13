@@ -1,0 +1,16 @@
+---
+const items = [
+  'Book a shoot',
+  'Casablanca · Tuesday–Saturday',
+  'Fabric before the figure',
+  'Lookbooks · Casting boards · Client galleries',
+  'Studio Moire · est. 2020',
+];
+// Duplicated so the -50% translate loops seamlessly.
+const loop = [...items, ...items];
+---
+<div class="marquee" role="presentation" aria-hidden="true">
+  <div class="marquee-track">
+    {loop.map((t) => <span class="marquee-item">{t}</span>)}
+  </div>
+</div>

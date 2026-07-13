@@ -75,9 +75,11 @@ const formatPrice = (s: any): string | undefined => {
             const duration = getDuration(s);
             const imageUrl = s.media?.mainMedia?.image?.url ?? s.media?.items?.[0]?.image?.url;
             return (
-              <li class="border border-border rounded-md overflow-hidden bg-paper-warm flex flex-col">
+              <li class="offer-card border border-border rounded-md overflow-hidden bg-paper-warm flex flex-col" data-reveal>
                 {imageUrl && (
-                  <img src={imageUrl} alt={s.name ?? 'Studio Moire shoot'} loading="lazy" decoding="async" class="w-full h-48 object-cover" />
+                  <div data-zoom class="w-full h-48">
+                    <img src={imageUrl} alt={s.name ?? 'Studio Moire shoot'} loading="lazy" decoding="async" class="w-full h-full object-cover" />
+                  </div>
                 )}
                 <div class="p-6 flex flex-col gap-3 flex-1">
                   <h2 class="font-display text-2xl leading-tight">{s.name ?? 'Untitled'}</h2>

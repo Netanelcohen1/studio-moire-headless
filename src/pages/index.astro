@@ -1,6 +1,7 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import { decorative, heroShoot } from '../lib/images';
+import Marquee from '../components/Marquee.astro';
 import { getPortfolio, getTestimonials, getFaq } from '../lib/cms';
 
 const [projects, testimonials, faqs] = await Promise.all([
@@ -106,12 +107,15 @@ const jsonLd = {
     </div>
   </section>
 
+  <!-- Marquee band -->
+  <Marquee />
+
   <!-- 2 · Proof strip -->
   <section class="bg-paper-warm border-y border-border">
     <div class="max-w-6xl mx-auto px-6 py-12 grid grid-cols-1 md:grid-cols-[1fr_auto] gap-10 items-center">
       <div class="grid grid-cols-1 sm:grid-cols-3 gap-8">
         <div>
-          <p class="font-display text-3xl text-ink">{projects.length || 10}</p>
+          <p class="font-display text-3xl text-ink" data-countup={String(projects.length || 10)}>{projects.length || 10}</p>
           <p class="text-sm text-mute">listed portfolio projects, each with pricing and timing</p>
         </div>
         <div>
@@ -146,7 +150,9 @@ const jsonLd = {
       {offer.map((p, i) => (
         <article class="offer-card flex flex-col border border-border rounded-md overflow-hidden bg-paper-warm" data-reveal style={`--reveal-delay: ${i * 70}ms;`}>
           {p.image && (
-            <img src={p.image} alt={p.name ?? 'Portfolio project'} width="1024" height="1024" loading="lazy" decoding="async" class="w-full h-52 object-cover" />
+            <div data-zoom class="w-full h-52">
+              <img src={p.image} alt={p.name ?? 'Portfolio project'} width="1024" height="1024" loading="lazy" decoding="async" class="w-full h-full object-cover" />
+            </div>
           )}
           <div class="flex flex-col gap-2 p-5 flex-1">
             <h3 class="font-display text-xl leading-tight">{p.name}</h3>
@@ -397,6 +403,33 @@ const jsonLd = {
     initHeroSlides();
     document.addEventListener('astro:page-load', initHeroSlides);
     document.addEventListener('astro:before-swap', () => { if (heroTimer) window.clearInterval(heroTimer); });
+
+    // Count-up: animate stat numbers from 0 when they scroll into view.
+    function initCountUp() {
+      const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      const els = document.querySelectorAll<HTMLElement>('[data-countup]');
+      if (reduce || !('IntersectionObserver' in window)) return;
+      const io = new IntersectionObserver((entries, obs) => {
+        for (const e of entries) {
+          if (!e.isIntersecting) continue;
+          const el = e.target as HTMLElement;
+          const target = parseInt(el.dataset.countup ?? '0', 10) || 0;
+          const start = performance.now();
+          const dur = 900;
+          const tick = (now: number) => {
+            const p = Math.min(1, (now - start) / dur);
+            const eased = 1 - Math.pow(1 - p, 3);
+            el.textContent = String(Math.round(eased * target));
+            if (p < 1) requestAnimationFrame(tick);
+          };
+          requestAnimationFrame(tick);
+          obs.unobserve(el);
+        }
+      }, { threshold: 0.6 });
+      els.forEach((el) => io.observe(el));
+    }
+    initCountUp();
+    document.addEventListener('astro:page-load', initCountUp);
 
     // Reveal the mobile sticky CTA only after the hero scrolls out of view.
     const bar = document.querySelector<HTMLElement>('[data-sticky-book]');

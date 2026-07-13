@@ -47,10 +47,13 @@ const itemListJsonLd = {
         <li
           class="offer-card flex flex-col border border-border rounded-md overflow-hidden bg-paper-warm"
           data-pf-item
+          data-reveal
           data-pf-text={`${p.name ?? ''} ${p.shortDescription ?? ''} ${p.featuredNote ?? ''}`.toLowerCase()}
         >
           {p.image && (
-            <img src={p.image} alt={p.name ?? 'Portfolio project'} width="1024" height="1024" loading="lazy" decoding="async" class="w-full h-56 object-cover" />
+            <div data-zoom class="w-full h-56">
+              <img src={p.image} alt={p.name ?? 'Portfolio project'} width="1024" height="1024" loading="lazy" decoding="async" class="w-full h-full object-cover" />
+            </div>
           )}
           <div class="flex flex-col gap-3 p-6 flex-1">
             <h2 class="font-display text-2xl leading-tight">{p.name}</h2>
