@@ -2,6 +2,7 @@
 import Layout from '../layouts/Layout.astro';
 import { decorative, heroShoot } from '../lib/images';
 import Marquee from '../components/Marquee.astro';
+import ScrollOutfit from '../components/ScrollOutfit.astro';
 import { getPortfolio, getTestimonials, getFaq } from '../lib/cms';
 
 const [projects, testimonials, faqs] = await Promise.all([
@@ -191,6 +192,9 @@ const jsonLd = {
       </div>
     </div>
   </section>
+
+  <!-- Scroll-driven outfit change (the look + backdrop change as you scroll) -->
+  <ScrollOutfit />
 
   <!-- 5 · How it works -->
   <section class="max-w-6xl mx-auto px-6 py-20 grid grid-cols-1 md:grid-cols-[1fr_1fr] gap-12 items-center">

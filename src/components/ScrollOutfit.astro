@@ -1,0 +1,148 @@
+---
+import { heroShoot } from '../lib/images';
+const frames = heroShoot; // 5 consistent-framing shots; only garment + fabric change
+const looks = [
+  { name: 'Saffron silk kaftan', fabric: 'Silk · fluid drape', tint: '#E0A63C' },
+  { name: 'Indigo raw denim', fabric: 'Selvedge · deep indigo', tint: '#2f4a63' },
+  { name: 'Gold-thread cotton', fabric: 'Cotton · sfifa braid', tint: '#C8A24A' },
+  { name: 'Terracotta wool coat', fabric: 'Wool · warm weight', tint: '#A64B27' },
+  { name: 'Hand-woven djellaba', fabric: 'Wool blend · stripe', tint: '#6C5B4C' },
+];
+const total = String(frames.length).padStart(2, '0');
+---
+<section class="scroll-outfit" data-scroll-outfit aria-label="The collection on set — the look changes as you scroll">
+  <div class="scroll-outfit-track" style={`height: ${frames.length * 100}vh;`}>
+    <div class="scroll-outfit-sticky">
+      <div class="scroll-outfit-stage">
+        {frames.map((f, i) => (
+          <img
+            class:list={['scroll-outfit-frame', i === 0 && 'is-active']}
+            src={f.src}
+            alt={f.alt}
+            data-frame={String(i)}
+            width="1024" height="1024"
+            loading={i === 0 ? 'eager' : 'lazy'}
+            decoding="async"
+          />
+        ))}
+        <span class="scroll-outfit-scrim" aria-hidden="true"></span>
+      </div>
+
+      <div class="scroll-outfit-panel">
+        <p class="scroll-outfit-kicker">The collection, on set</p>
+        <h2 class="scroll-outfit-title" data-outfit-title>{looks[0].name}</h2>
+        <p class="scroll-outfit-fabric" data-outfit-fabric>{looks[0].fabric}</p>
+        <p class="scroll-outfit-sub">Every garment is shot beside its fabric sample. Keep scrolling — the look changes.</p>
+        <div class="scroll-outfit-index"><span data-outfit-index>01</span> <span class="sep">/</span> {total}</div>
+        <a href="/book" class="btn-primary mt-2">Book a shoot</a>
+      </div>
+
+      <ol class="scroll-outfit-dots" aria-hidden="true">
+        {frames.map((_, i) => <li data-dot={String(i)} class={i === 0 ? 'is-active' : ''}></li>)}
+      </ol>
+    </div>
+  </div>
+
+  <script is:inline define:vars={{ names: looks.map((l) => l.name), fabrics: looks.map((l) => l.fabric), tints: looks.map((l) => l.tint), count: frames.length }}>
+    (function () {
+      let raf = 0;
+      let onScroll = null;
+      function init() {
+        const section = document.querySelector('[data-scroll-outfit]');
+        if (!section) return;
+        const track = section.querySelector('.scroll-outfit-track');
+        const frames = Array.from(section.querySelectorAll('.scroll-outfit-frame'));
+        const dots = Array.from(section.querySelectorAll('[data-dot]'));
+        const titleEl = section.querySelector('[data-outfit-title]');
+        const fabricEl = section.querySelector('[data-outfit-fabric]');
+        const indexEl = section.querySelector('[data-outfit-index]');
+        const panel = section.querySelector('.scroll-outfit-panel');
+        if (!track || frames.length === 0) return;
+        let current = -1;
+        function apply(i) {
+          if (i === current) return;
+          current = i;
+          frames.forEach((f, n) => f.classList.toggle('is-active', n === i));
+          dots.forEach((d, n) => d.classList.toggle('is-active', n === i));
+          if (titleEl) titleEl.textContent = names[i];
+          if (fabricEl) fabricEl.textContent = fabrics[i];
+          if (indexEl) indexEl.textContent = String(i + 1).padStart(2, '0');
+          if (panel) panel.style.setProperty('--look-tint', tints[i]);
+        }
+        function update() {
+          raf = 0;
+          const rect = track.getBoundingClientRect();
+          const scrollable = rect.height - window.innerHeight;
+          const progressed = Math.min(Math.max(-rect.top / (scrollable || 1), 0), 1);
+          const idx = Math.min(count - 1, Math.floor(progressed * count));
+          apply(idx);
+        }
+        onScroll = function () { if (!raf) raf = requestAnimationFrame(update); };
+        window.addEventListener('scroll', onScroll, { passive: true });
+        window.addEventListener('resize', onScroll, { passive: true });
+        update();
+      }
+      function teardown() {
+        if (onScroll) { window.removeEventListener('scroll', onScroll); window.removeEventListener('resize', onScroll); onScroll = null; }
+        if (raf) { cancelAnimationFrame(raf); raf = 0; }
+      }
+      init();
+      document.addEventListener('astro:page-load', () => { teardown(); init(); });
+      document.addEventListener('astro:before-swap', teardown);
+    })();
+  </script>
+</section>
+
+<style>
+  .scroll-outfit { position: relative; background: var(--color-ink); }
+  .scroll-outfit-track { position: relative; }
+  .scroll-outfit-sticky { position: sticky; top: 0; height: 100vh; overflow: hidden; }
+  .scroll-outfit-stage { position: absolute; inset: 0; }
+  .scroll-outfit-frame {
+    position: absolute; inset: 0; width: 100%; height: 100%;
+    object-fit: cover; opacity: 0; transform: scale(1.03);
+    transition: opacity 700ms ease, transform 1400ms ease;
+  }
+  .scroll-outfit-frame.is-active { opacity: 1; transform: scale(1); }
+  .scroll-outfit-scrim {
+    position: absolute; inset: 0; z-index: 1;
+    background: linear-gradient(90deg,
+      color-mix(in srgb, var(--color-ink) 80%, transparent) 0%,
+      color-mix(in srgb, var(--color-ink) 42%, transparent) 46%,
+      transparent 72%);
+  }
+  .scroll-outfit-panel {
+    position: absolute; z-index: 2; left: clamp(1.5rem, 5vw, 5rem); top: 50%;
+    transform: translateY(-50%); max-width: 26rem;
+    display: flex; flex-direction: column; gap: 0.6rem; color: var(--color-on-dark);
+  }
+  .scroll-outfit-kicker {
+    text-transform: uppercase; letter-spacing: 0.18em; font-size: 0.8rem;
+    color: var(--look-tint, var(--color-accent)); transition: color 500ms ease;
+  }
+  .scroll-outfit-title { font-family: var(--font-display); font-size: clamp(2rem, 4vw, 3.5rem); line-height: 1.04; }
+  .scroll-outfit-fabric { font-size: 0.95rem; opacity: 0.85; }
+  .scroll-outfit-sub { font-size: 0.95rem; opacity: 0.8; max-width: 22rem; }
+  .scroll-outfit-index { font-family: var(--font-display); font-size: 1.1rem; letter-spacing: 0.1em; opacity: 0.9; }
+  .scroll-outfit-index .sep { opacity: 0.5; }
+  .scroll-outfit-panel .btn-primary { align-self: flex-start; }
+  .scroll-outfit-dots {
+    position: absolute; z-index: 2; right: 1.5rem; top: 50%; transform: translateY(-50%);
+    display: flex; flex-direction: column; gap: 0.6rem;
+  }
+  .scroll-outfit-dots li {
+    width: 8px; height: 8px; border-radius: 999px;
+    background: color-mix(in srgb, var(--color-on-dark) 45%, transparent);
+    transition: background 300ms ease, transform 300ms ease;
+  }
+  .scroll-outfit-dots li.is-active { background: var(--color-accent); transform: scale(1.6); }
+  @media (max-width: 768px) {
+    .scroll-outfit-scrim { background: linear-gradient(0deg, color-mix(in srgb, var(--color-ink) 85%, transparent) 0%, color-mix(in srgb, var(--color-ink) 20%, transparent) 55%, transparent 80%); }
+    .scroll-outfit-panel { top: auto; bottom: 2rem; transform: none; left: 1.25rem; right: 1.25rem; max-width: none; }
+    .scroll-outfit-dots { display: none; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .scroll-outfit-frame { transition: opacity 200ms ease; transform: none; }
+    .scroll-outfit-dots li { transition: none; }
+  }
+</style>
